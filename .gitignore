@@ -1,0 +1,11 @@
+.vscode
+.DS_Store
+build
+bin
+obj
+Pathtraced.depend
+Pathtraced.layout
+render.bmp
+render.png
+.clang-format
+.cache
