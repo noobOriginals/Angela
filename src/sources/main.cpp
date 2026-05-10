@@ -6,6 +6,10 @@
 #include <renderer/pathtracer.hpp>
 #include <lib/image.hpp>
 
+#ifdef __APPLE__
+#include <renderer/metal_pathtracer.hpp>
+#endif
+
 // ---------------------------------------------------------------------------
 // Cornell-box-style scene to exercise emissive materials and NEE+MIS.
 // All geometry is added directly — no OBJ loading needed.
@@ -67,7 +71,7 @@ static void makeCornellBox(core::Scene& scene) {
 }
 
 int main() {
-#if 0
+#if 1
     // --- Sponza ---
     const int32 W = 1920, H = 1080;
     core::Scene scene;
@@ -97,16 +101,29 @@ int main() {
     RenderConfig cfg;
     cfg.width      = W;
     cfg.height     = H;
-    cfg.spp        = 64;
+    cfg.spp        = 1000;
     cfg.maxDepth   = 16;
     cfg.tileSize   = 32;
     cfg.numThreads = 0;
 
     Image out(W, H);
-    CPUPathTracer renderer;
     std::cout << "Rendering " << W << "x" << H
               << " @ " << cfg.spp << " spp  depth=" << cfg.maxDepth << "\n";
-    renderer.render(scene, cam, cfg, out);
+
+#ifdef __APPLE__
+    MetalPathTracer metalRenderer;
+    if (metalRenderer.isAvailable()) {
+        metalRenderer.render(scene, cam, cfg, out);
+    } else {
+        std::cout << "Metal unavailable — falling back to CPU\n";
+        CPUPathTracer cpuRenderer;
+        cpuRenderer.render(scene, cam, cfg, out);
+    }
+#else
+    CPUPathTracer cpuRenderer;
+    cpuRenderer.render(scene, cam, cfg, out);
+#endif
+
     out.savePNG("renders/render.png", cfg.spp);
     std::cout << "Saved render.png\n";
     return 0;

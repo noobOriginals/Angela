@@ -94,4 +94,5 @@ Each phase leaves the project in a fully working, compilable state. No existing 
 | **3** | OBJ loading (tinyobjloader) · UV coordinates · Texture maps (stb\_image read) | ✅ Complete |
 | **4** | BVH acceleration structure (SAH) | ✅ Complete |
 | **5** | Importance sampling · MIS · Environment maps · Emissive materials | ✅ Complete |
-| **GPU** | CUDA/Metal/Vulkan compute backend — `core/` promotes to device functions; `Scene` arrays become device buffers | — |
+| **GPU (Metal)** | Metal compute backend (Apple Silicon) — JIT shader, NEE+MIS parity with CPU, unified-memory buffers | ✅ Complete |
+| **GPU (CUDA/Vulkan)** | CUDA or Vulkan compute backend | — |
