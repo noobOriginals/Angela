@@ -63,7 +63,7 @@ struct Material { int32 type; float32 data[4]; };  // albedo.rgb + param
 
 ## Render Verification
 
-Never inspect rendered images directly (no pixel reading, no file introspection). The user describes how renders look. Only verify that the output file was produced (e.g. `ls render.png`). Inspect image content only when the user explicitly asks.
+Never inspect rendered images directly (no pixel reading, no file introspection). The user describes how renders look. Only verify that the output file was produced (e.g. `ls renders/render.png`). Inspect image content only when the user explicitly asks.
 
 ---
 
@@ -93,6 +93,5 @@ Each phase leaves the project in a fully working, compilable state. No existing 
 | **2** | Metal + Dielectric BRDFs · Triangle + Quad primitives | ✅ Complete |
 | **3** | OBJ loading (tinyobjloader) · UV coordinates · Texture maps (stb\_image read) | ✅ Complete |
 | **4** | BVH acceleration structure (SAH) | ✅ Complete |
-| **4** | BVH acceleration structure (SAH) | — |
-| **5** | Importance sampling · MIS · Environment maps · Emissive materials | — |
+| **5** | Importance sampling · MIS · Environment maps · Emissive materials | ✅ Complete |
 | **GPU** | CUDA/Metal/Vulkan compute backend — `core/` promotes to device functions; `Scene` arrays become device buffers | — |

@@ -1,6 +1,7 @@
 #include <core/material.hpp>
 
 #include <cmath>
+#include <glm/gtc/constants.hpp>
 
 namespace core {
 
@@ -32,17 +33,28 @@ void setEmissive(Material& m, glm::vec3 color, float32 intensity) {
     m.albedoTexture  = -1;
 }
 
-static glm::vec3 resolveAlbedo(const Material& mat, const HitRecord& hr,
-                                const Texture* textures) {
+glm::vec3 getMaterialAlbedo(const Material& mat, const HitRecord& hr,
+                             const Texture* textures) {
     if (textures && mat.albedoTexture >= 0)
         return sampleTexture(textures[mat.albedoTexture], hr.uv);
     return glm::vec3(mat.data[0], mat.data[1], mat.data[2]);
 }
 
+float32 scatterPDF(const HitRecord& hr, const Material& mat, const glm::vec3& scatterDir) {
+    if (mat.type == DIFFUSE) {
+        float32 cosTheta = glm::max(0.0f, glm::dot(hr.n, glm::normalize(scatterDir)));
+        return cosTheta / glm::pi<float32>();
+    }
+    return 0.0f;  // delta-function BSDFs (metal, dielectric)
+}
+
 static ScatterResult scatterDiffuse(const HitRecord& hr, glm::vec3 albedo, PCG32& rng) {
     glm::vec3 dir = hr.n + rng.nextUnitVector();
     if (glm::dot(dir, dir) < 1e-8f) dir = hr.n;
-    return { Ray(hr.p, dir), albedo, true };
+    glm::vec3 normDir  = glm::normalize(dir);
+    float32   cosTheta = glm::max(0.0f, glm::dot(hr.n, normDir));
+    float32   pdf      = cosTheta / glm::pi<float32>();
+    return { Ray(hr.p, normDir), albedo, pdf, true };
 }
 
 static ScatterResult scatterMetal(const Ray& ray, const HitRecord& hr,
@@ -50,7 +62,7 @@ static ScatterResult scatterMetal(const Ray& ray, const HitRecord& hr,
     glm::vec3 reflected = glm::reflect(glm::normalize(ray.dir), hr.n);
     glm::vec3 dir       = reflected + fuzz * rng.nextUnitSphere();
     bool      scattered = glm::dot(dir, hr.n) > 0.0f;
-    return { Ray(hr.p, glm::normalize(dir)), albedo, scattered };
+    return { Ray(hr.p, glm::normalize(dir)), albedo, 0.0f, scattered };
 }
 
 static float32 schlick(float32 cosine, float32 ratio) {
@@ -72,18 +84,18 @@ static ScatterResult scatterDielectric(const Ray& ray, const HitRecord& hr,
     else
         dir = glm::refract(unit, hr.n, ratio);
 
-    return { Ray(hr.p, dir), glm::vec3(1.0f), true };
+    return { Ray(hr.p, dir), glm::vec3(1.0f), 0.0f, true };
 }
 
 ScatterResult scatter(const Ray& ray, const HitRecord& hr, const Material& mat,
                       PCG32& rng, const Texture* textures) {
-    glm::vec3 albedo = resolveAlbedo(mat, hr, textures);
+    glm::vec3 albedo = getMaterialAlbedo(mat, hr, textures);
 
     switch (mat.type) {
     case DIFFUSE:    return scatterDiffuse   (hr, albedo, rng);
     case METAL:      return scatterMetal     (ray, hr, albedo, mat.data[3], rng);
     case DIELECTRIC: return scatterDielectric(ray, hr, mat.data[3], rng);
-    default:         return { ray, glm::vec3(0.0f), false };
+    default:         return { ray, glm::vec3(0.0f), 0.0f, false };
     }
 }
 

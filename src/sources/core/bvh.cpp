@@ -254,10 +254,12 @@ bool hitBVH(const Ray& ray, HitRecord& hr,
 
         if (node.count > 0) {
             for (int32 i = 0; i < node.count; ++i) {
-                if (hitObject(ray, temp, tMin, closest, objects[primIndices[node.left + i]])) {
-                    hitAny  = true;
-                    closest = temp.t;
-                    hr      = temp;
+                int32 idx = primIndices[node.left + i];
+                if (hitObject(ray, temp, tMin, closest, objects[idx])) {
+                    hitAny          = true;
+                    closest         = temp.t;
+                    hr              = temp;
+                    hr.objectIndex  = idx;
                 }
             }
         } else {

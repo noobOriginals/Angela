@@ -8,17 +8,32 @@
 #include <core/material.hpp>
 #include <core/texture.hpp>
 #include <core/bvh.hpp>
+#include <core/envmap.hpp>
 #include <core/scene.hpp>
 #include <core/camera.hpp>
 #include <lib/image.hpp>
 
-// GPU-portable core — raw pointers, no STL containers
-glm::vec3 traceRay(const core::Ray& ray,
-                   const core::Object*   objects,
-                   const core::Material* materials,
-                   const core::Texture*  textures,
-                   const core::BVHNode*  bvh,
-                   const int32*          primIndices,
+// Bundles the raw-pointer scene data passed into traceRay.
+// GPU-portable: only POD types and raw pointers, no STL.
+struct SceneView {
+    const core::Object*   objects;
+    const core::Material* materials;
+    const core::Texture*  textures;
+    const core::BVHNode*  bvh;
+    const int32*          primIndices;
+    const core::EnvMap*   envMap;      // always valid; pixels==nullptr → analytical sky
+    const int32*          emissiveIds;
+    int32                 numEmissive;
+};
+
+// MIS power heuristic (β=2): p² / (p² + q²)
+inline float32 powerHeuristic(float32 p, float32 q) {
+    p *= p; q *= q;
+    return (p + q > 0.0f) ? p / (p + q) : 0.0f;
+}
+
+// GPU-portable path tracer core — no STL, no heap allocation.
+glm::vec3 traceRay(const core::Ray& ray, const SceneView& sv,
                    PCG32& rng, int32 maxDepth);
 
 struct RenderConfig {

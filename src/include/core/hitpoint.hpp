@@ -12,6 +12,7 @@ struct HitRecord {
     glm::vec3 p, n;
     glm::vec2 uv;
     int32     materialIndex;
+    int32     objectIndex;   // index into the objects array; set by hitBVH
     bool      frontFace;
 };
 

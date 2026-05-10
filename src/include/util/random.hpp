@@ -53,6 +53,11 @@ struct PCG32 {
         glm::vec3 v = nextUnitSphere();
         return glm::dot(v, normal) > 0.0f ? v : -v;
     }
+
+    // Uniform random direction on the hemisphere above normal.
+    glm::vec3 nextUnitHemisphere(const glm::vec3& normal) {
+        return glm::normalize(nextHemisphere(normal));
+    }
 };
 
 #endif // UTIL_RANDOM_HPP

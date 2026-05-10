@@ -32,9 +32,18 @@ void setEmissive  (Material& m, glm::vec3 color, float32 intensity);
 
 struct ScatterResult {
     Ray       ray;
-    glm::vec3 attenuation;
+    glm::vec3 attenuation;  // f(ωo,ωi) * cosθ / pdf — multiply directly into throughput
+    float32   pdf;          // BRDF sampling pdf; 0 for delta-function BSDFs
     bool      scattered;
 };
+
+// Returns the diffuse albedo (texture or flat color). For non-diffuse, returns data[0..2].
+glm::vec3 getMaterialAlbedo(const Material& mat, const HitRecord& hr,
+                             const Texture* textures);
+
+// Evaluates the BRDF cosine-weighted pdf for the given scatter direction.
+// Returns 0 for delta-function BSDFs (metal, dielectric).
+float32 scatterPDF(const HitRecord& hr, const Material& mat, const glm::vec3& scatterDir);
 
 ScatterResult scatter(const Ray&, const HitRecord&, const Material&, PCG32& rng,
                       const Texture* textures = nullptr);
