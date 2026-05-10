@@ -1,4 +1,5 @@
 #include <core/scene.hpp>
+#include <core/bvh.hpp>
 
 #include <iostream>
 #include <stb_image/stb_image.h>
@@ -28,6 +29,10 @@ bool Scene::hit(const Ray& ray, HitRecord& hr, float32 tMin, float32 tMax) const
     }
 
     return hitAny;
+}
+
+void Scene::buildBVH() {
+    core::buildBVH(objects.data(), (int32)objects.size(), bvhNodes, primIndices);
 }
 
 int32 Scene::addImageTexture(const std::string& path) {

@@ -7,15 +7,18 @@
 #include <core/object.hpp>
 #include <core/material.hpp>
 #include <core/texture.hpp>
+#include <core/bvh.hpp>
 #include <core/scene.hpp>
 #include <core/camera.hpp>
 #include <lib/image.hpp>
 
 // GPU-portable core — raw pointers, no STL containers
 glm::vec3 traceRay(const core::Ray& ray,
-                   const core::Object*   objects,   int32 numObjects,
+                   const core::Object*   objects,
                    const core::Material* materials,
                    const core::Texture*  textures,
+                   const core::BVHNode*  bvh,
+                   const int32*          primIndices,
                    PCG32& rng, int32 maxDepth);
 
 struct RenderConfig {

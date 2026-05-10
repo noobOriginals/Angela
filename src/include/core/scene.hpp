@@ -8,6 +8,7 @@
 #include <core/object.hpp>
 #include <core/material.hpp>
 #include <core/texture.hpp>
+#include <core/bvh.hpp>
 
 namespace core {
 
@@ -16,9 +17,15 @@ struct Scene {
     std::vector<Material> materials;
     std::vector<Texture>  textures;
 
+    // BVH — populated by buildBVH(). Must be called before rendering.
+    std::vector<BVHNode> bvhNodes;
+    std::vector<int32>   primIndices;
+
     int32 addMaterial(const Material& m);
     void  addObject  (const Object& o);
     bool  hit(const Ray&, HitRecord&, float32 tMin, float32 tMax) const;
+
+    void  buildBVH();
 
     // Loads image from disk (stb_image). Returns existing index if path was seen before.
     int32 addImageTexture(const std::string& path);

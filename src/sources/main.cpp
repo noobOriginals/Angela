@@ -9,12 +9,16 @@
 int main() {
     // Low resolution / spp — 262k triangles without BVH make full-res very slow.
     // Raise these after Phase 4 (BVH) is in place.
-    const int32 W = 400;
-    const int32 H = 225;
+    const int32 W = 1920;
+    const int32 H = 1080;
 
     core::Scene scene;
     if (!core::loadOBJ(scene, "assets/Sponza/sponza.obj", "assets/Sponza"))
         return 1;
+
+    std::cout << "Building BVH...\n";
+    scene.buildBVH();
+    std::cout << "BVH: " << scene.bvhNodes.size() << " nodes\n";
 
     // Looking along the long axis of the atrium from near one end
     core::Camera cam = core::makeCamera(
@@ -27,8 +31,8 @@ int main() {
     RenderConfig cfg;
     cfg.width      = W;
     cfg.height     = H;
-    cfg.spp        = 4;
-    cfg.maxDepth   = 6;
+    cfg.spp        = 200;
+    cfg.maxDepth   = 100;
     cfg.tileSize   = 32;
     cfg.numThreads = 0;
 

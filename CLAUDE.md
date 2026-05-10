@@ -91,7 +91,8 @@ Each phase leaves the project in a fully working, compilable state. No existing 
 |-------|-------|--------|
 | **1** | Sphere intersection · Lambertian BRDF · Perspective camera · PNG output · Tile thread pool | ✅ Complete |
 | **2** | Metal + Dielectric BRDFs · Triangle + Quad primitives | ✅ Complete |
-| **3** | OBJ loading (tinyobjloader) · UV coordinates · Texture maps (stb\_image read) | — |
+| **3** | OBJ loading (tinyobjloader) · UV coordinates · Texture maps (stb\_image read) | ✅ Complete |
+| **4** | BVH acceleration structure (SAH) | ✅ Complete |
 | **4** | BVH acceleration structure (SAH) | — |
 | **5** | Importance sampling · MIS · Environment maps · Emissive materials | — |
 | **GPU** | CUDA/Metal/Vulkan compute backend — `core/` promotes to device functions; `Scene` arrays become device buffers | — |

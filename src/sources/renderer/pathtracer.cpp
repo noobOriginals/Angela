@@ -21,28 +21,18 @@ static glm::vec3 skyColor(const core::Ray& ray) {
 // traceRay — GPU-portable core
 
 glm::vec3 traceRay(const core::Ray& ray,
-                   const core::Object*   objects,   int32 numObjects,
+                   const core::Object*   objects,
                    const core::Material* materials,
                    const core::Texture*  textures,
+                   const core::BVHNode*  bvh,
+                   const int32*          primIndices,
                    PCG32& rng, int32 maxDepth) {
-    core::Ray     current    = ray;
-    glm::vec3     throughput = glm::vec3(1.0f);
-    core::HitRecord temp;   // reused across all depth levels and object tests
+    core::Ray current    = ray;
+    glm::vec3 throughput = glm::vec3(1.0f);
 
     for (int32 depth = 0; depth < maxDepth; ++depth) {
         core::HitRecord hr;
-        bool    hitAny  = false;
-        float32 closest = 1e30f;
-
-        for (int32 i = 0; i < numObjects; ++i) {
-            if (core::hitObject(current, temp, 0.001f, closest, objects[i])) {
-                hitAny  = true;
-                closest = temp.t;
-                hr      = temp;
-            }
-        }
-
-        if (!hitAny)
+        if (!core::hitBVH(current, hr, 0.001f, 1e30f, bvh, primIndices, objects))
             return throughput * skyColor(current);
 
         const core::Material& mat = materials[hr.materialIndex];
@@ -86,10 +76,11 @@ void CPUPathTracer::renderTile(const core::Scene& scene, const core::Camera& cam
     float32 invW = 1.0f / (float32)(cfg.width  - 1);
     float32 invH = 1.0f / (float32)(cfg.height - 1);
 
-    const core::Object*   objects   = scene.objects.data();
-    const int32           numObjs   = (int32)scene.objects.size();
-    const core::Material* materials = scene.materials.data();
-    const core::Texture*  textures  = scene.textures.empty() ? nullptr : scene.textures.data();
+    const core::Object*   objects     = scene.objects.data();
+    const core::Material* materials   = scene.materials.data();
+    const core::Texture*  textures    = scene.textures.empty() ? nullptr : scene.textures.data();
+    const core::BVHNode*  bvh         = scene.bvhNodes.data();
+    const int32*          primIndices = scene.primIndices.data();
 
     for (int32 y = y0; y < y1; ++y) {
         for (int32 x = x0; x < x1; ++x) {
@@ -100,8 +91,8 @@ void CPUPathTracer::renderTile(const core::Scene& scene, const core::Camera& cam
                 float32   u   = (x + rng.nextFloat()) * invW;
                 float32   v   = (y + rng.nextFloat()) * invH;
                 core::Ray r   = core::generateRay(cam, u, v, rng);
-                glm::vec3 col = traceRay(r, objects, numObjs, materials, textures,
-                                         rng, cfg.maxDepth);
+                glm::vec3 col = traceRay(r, objects, materials, textures,
+                                         bvh, primIndices, rng, cfg.maxDepth);
                 out.accumulate(x, y, col);
             }
         }
