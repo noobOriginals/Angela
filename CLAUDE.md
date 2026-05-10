@@ -87,11 +87,11 @@ Never inspect rendered images directly (no pixel reading, no file introspection)
 
 Each phase leaves the project in a fully working, compilable state. No existing `core/` API is broken between phases — new primitives, BRDFs, and structures are added alongside existing ones.
 
-| Phase | Scope |
-|-------|-------|
-| **1** | Sphere intersection · Lambertian BRDF · Perspective camera · PNG output · Tile thread pool |
-| **2** | Metal + Dielectric BRDFs · Triangle + Quad primitives |
-| **3** | OBJ loading (tinyobjloader) · UV coordinates · Texture maps (stb\_image read) |
-| **4** | BVH acceleration structure (SAH) |
-| **5** | Importance sampling · MIS · Environment maps · Emissive materials |
-| **GPU** | CUDA/Metal/Vulkan compute backend — `core/` promotes to device functions; `Scene` arrays become device buffers |
+| Phase | Scope | Status |
+|-------|-------|--------|
+| **1** | Sphere intersection · Lambertian BRDF · Perspective camera · PNG output · Tile thread pool | ✅ Complete |
+| **2** | Metal + Dielectric BRDFs · Triangle + Quad primitives | ✅ Complete |
+| **3** | OBJ loading (tinyobjloader) · UV coordinates · Texture maps (stb\_image read) | — |
+| **4** | BVH acceleration structure (SAH) | — |
+| **5** | Importance sampling · MIS · Environment maps · Emissive materials | — |
+| **GPU** | CUDA/Metal/Vulkan compute backend — `core/` promotes to device functions; `Scene` arrays become device buffers | — |
