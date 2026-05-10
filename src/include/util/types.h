@@ -23,4 +23,4 @@ typedef long double float128;
 }
 #endif
 
-#endif
+#endif // TYPES_H

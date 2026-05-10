@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 
 // Local includes
-#include <types.h>
+#include <util/types.h>
 
 struct Pixel {
     uint8 r, g, b;

@@ -2,6 +2,12 @@
 
 namespace core {
 
+// Material
+
+Material::Material(MaterialType type, const glm::vec3& albedo, float32 param) : type(type), albedo(albedo), param(param) {}
+
+ScatterResult::ScatterResult(const Ray& ray, const glm::vec3& albedo, bool scattered) : ray(ray), albedo(albedo), scattered(scattered) {}
+
 // Object helpers
 
 void setSphereData(Object& obj, const glm::vec3& center, float32 radius) {
@@ -38,6 +44,17 @@ void setQuadData(Object& obj, const glm::vec3& center, const glm::vec3& u, const
     obj.data[8] = v.z;
 }
 
+void setMaterialData(Object& obj, MaterialType materialType, const glm::vec3& albedo, float32 param) {
+    obj.materialType = materialType;
+    obj.materialData[0] = albedo.x;
+    obj.materialData[1] = albedo.y;
+    obj.materialData[2] = albedo.z;
+    obj.materialData[3] = param;
+}
+
+void setMaterialData(Object& obj, const Material& data) {
+    setMaterialData(obj, data.type, data.albedo, data.param);
+}
 
 bool hitSphere(const Ray& ray, Hitpoint& hp, float32 minT, float32 maxT, const float32 data[OBJECT_DATA_SIZE]) {
     return false;
@@ -71,26 +88,6 @@ bool hit(const Ray& ray, Hitpoint& hp, float32 minT, float32 maxT, const Object&
     }
 }
 
-
-// Material helpers
-
-void setMaterialData(Object& obj, MaterialType materialType, const glm::vec3& albedo, float32 param) {
-    obj.materialType = materialType;
-    obj.data[0] = albedo.x;
-    obj.data[1] = albedo.y;
-    obj.data[2] = albedo.z;
-    obj.data[3] = param;
-}
-
-void setMaterialData(Object& obj, const Material& data) {
-    obj.materialType = data.type;
-    obj.data[0] = data.data[0];
-    obj.data[1] = data.data[1];
-    obj.data[2] = data.data[2];
-    obj.data[3] = data.data[3];
-}
-
-
 ScatterResult scatterDiffuse(const Ray& ray, const Hitpoint& hp, const float32 data[MATERIAL_DATA_SIZE]) {
     return ScatterResult();
 }
@@ -101,26 +98,6 @@ ScatterResult scatterMetal(const Ray& ray, const Hitpoint& hp, const float32 dat
 
 ScatterResult scatterDielectric(const Ray& ray, const Hitpoint& hp, const float32 data[MATERIAL_DATA_SIZE]) {
     return ScatterResult();
-}
-
-ScatterResult scatter(const Ray& ray, const Hitpoint& hp, const Material& mat) {
-    switch (mat.type) {
-    case DIFFUSE: {
-        return scatterDiffuse(ray, hp, mat.data);
-    }
-
-    case METAL: {
-        return scatterMetal(ray, hp, mat.data);
-    }
-
-    case DIELECTRIC: {
-        return scatterDielectric(ray, hp, mat.data);
-    }
-
-    default: {
-        return ScatterResult();
-    }
-    }
 }
 
 ScatterResult scatter(const Ray& ray, const Hitpoint& hp, const Object& obj) {

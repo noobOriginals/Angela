@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 
 // Local includes
-#include <types.h>
+#include <util/types.h>
 
 namespace core {
 
