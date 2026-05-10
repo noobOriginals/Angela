@@ -3,9 +3,7 @@
 build
 bin
 obj
-Pathtraced.depend
-Pathtraced.layout
-render.bmp
+assets
 render.png
 .clang-format
 .cache
