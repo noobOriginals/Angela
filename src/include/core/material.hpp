@@ -6,6 +6,7 @@
 #include <util/random.hpp>
 #include <core/ray.hpp>
 #include <core/hitpoint.hpp>
+#include <core/texture.hpp>
 
 namespace core {
 
@@ -21,6 +22,7 @@ enum MaterialType : int32 {
 struct Material {
     int32   type;
     float32 data[MATERIAL_DATA_SIZE];   // [0..2] = albedo rgb, [3] = param (fuzz / ior / intensity)
+    int32   albedoTexture;              // -1 = use data[0..2], >=0 = index into Scene::textures
 };
 
 void setDiffuse   (Material& m, glm::vec3 albedo);
@@ -34,7 +36,8 @@ struct ScatterResult {
     bool      scattered;
 };
 
-ScatterResult scatter(const Ray&, const HitRecord&, const Material&, PCG32& rng);
+ScatterResult scatter(const Ray&, const HitRecord&, const Material&, PCG32& rng,
+                      const Texture* textures = nullptr);
 
 } // namespace core
 

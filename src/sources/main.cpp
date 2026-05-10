@@ -2,78 +2,33 @@
 
 #include <core/scene.hpp>
 #include <core/camera.hpp>
+#include <core/loader.hpp>
 #include <renderer/pathtracer.hpp>
 #include <lib/image.hpp>
 
 int main() {
-    const int32 W = 800;
-    const int32 H = 450;
+    // Low resolution / spp — 262k triangles without BVH make full-res very slow.
+    // Raise these after Phase 4 (BVH) is in place.
+    const int32 W = 400;
+    const int32 H = 225;
 
-    // Scene
     core::Scene scene;
+    if (!core::loadOBJ(scene, "assets/Sponza/sponza.obj", "assets/Sponza"))
+        return 1;
 
-    // Materials
-    core::Material groundMat, leftMat, centerMat, rightMat, backMat, triMat;
-    core::setDiffuse   (groundMat, glm::vec3(0.48f, 0.48f, 0.48f));
-    core::setDiffuse   (leftMat,   glm::vec3(0.8f,  0.2f,  0.2f));
-    core::setDielectric(centerMat, 1.5f);
-    core::setMetal     (rightMat,  glm::vec3(0.8f,  0.7f,  0.3f), 0.05f);
-    core::setDiffuse   (backMat,   glm::vec3(0.3f,  0.6f,  0.8f));
-    core::setDiffuse   (triMat,    glm::vec3(0.2f,  0.8f,  0.3f));
-
-    int32 groundIdx = scene.addMaterial(groundMat);
-    int32 leftIdx   = scene.addMaterial(leftMat);
-    int32 centerIdx = scene.addMaterial(centerMat);
-    int32 rightIdx  = scene.addMaterial(rightMat);
-    int32 backIdx   = scene.addMaterial(backMat);
-    int32 triIdx    = scene.addMaterial(triMat);
-
-    // Objects
-    core::Object ground, left, center, right, backWall, tri;
-
-    // Ground — large sphere
-    core::setSphere(ground, glm::vec3(0.0f, -100.5f, -1.0f), 100.0f, groundIdx);
-
-    // Three spheres: diffuse / glass / metal
-    core::setSphere(left,   glm::vec3(-1.1f, 0.0f, -1.0f), 0.5f, leftIdx);
-    core::setSphere(center, glm::vec3( 0.0f, 0.0f, -1.0f), 0.5f, centerIdx);
-    core::setSphere(right,  glm::vec3( 1.1f, 0.0f, -1.0f), 0.5f, rightIdx);
-
-    // Back quad — blue backdrop
-    core::setQuad(backWall,
-        glm::vec3(0.0f, 0.5f, -2.5f),   // center
-        glm::vec3(4.0f, 0.0f,  0.0f),   // u  (horizontal)
-        glm::vec3(0.0f, 2.0f,  0.0f),   // v  (vertical)
-        backIdx);
-
-    // Floating triangle — green
-    core::setTriangle(tri,
-        glm::vec3(-0.35f, 0.6f, -0.6f),
-        glm::vec3( 0.35f, 0.6f, -0.6f),
-        glm::vec3( 0.0f,  1.2f, -0.6f),
-        triIdx);
-
-    scene.addObject(ground);
-    scene.addObject(left);
-    scene.addObject(center);
-    scene.addObject(right);
-    scene.addObject(backWall);
-    scene.addObject(tri);
-
-    // Camera
+    // Looking along the long axis of the atrium from near one end
     core::Camera cam = core::makeCamera(
-        glm::vec3(0.0f, 0.5f,  2.5f),
-        glm::vec3(0.0f, 0.0f, -1.0f),
-        glm::vec3(0.0f, 1.0f,  0.0f),
-        40.0f, (float32)W / (float32)H
+        glm::vec3(-1100.0f, 200.0f,  0.0f),
+        glm::vec3(  500.0f, 100.0f,  0.0f),
+        glm::vec3(    0.0f,   1.0f,  0.0f),
+        60.0f, (float32)W / (float32)H
     );
 
-    // Render
     RenderConfig cfg;
     cfg.width      = W;
     cfg.height     = H;
-    cfg.spp        = 128;
-    cfg.maxDepth   = 16;
+    cfg.spp        = 4;
+    cfg.maxDepth   = 6;
     cfg.tileSize   = 32;
     cfg.numThreads = 0;
 

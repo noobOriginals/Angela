@@ -1,6 +1,8 @@
 #include <renderer/pathtracer.hpp>
 
 #include <algorithm>
+#include <atomic>
+#include <iostream>
 #include <mutex>
 #include <queue>
 #include <thread>
@@ -19,11 +21,13 @@ static glm::vec3 skyColor(const core::Ray& ray) {
 // traceRay — GPU-portable core
 
 glm::vec3 traceRay(const core::Ray& ray,
-                   const core::Object* objects, int32 numObjects,
+                   const core::Object*   objects,   int32 numObjects,
                    const core::Material* materials,
+                   const core::Texture*  textures,
                    PCG32& rng, int32 maxDepth) {
-    core::Ray current    = ray;
-    glm::vec3 throughput = glm::vec3(1.0f);
+    core::Ray     current    = ray;
+    glm::vec3     throughput = glm::vec3(1.0f);
+    core::HitRecord temp;   // reused across all depth levels and object tests
 
     for (int32 depth = 0; depth < maxDepth; ++depth) {
         core::HitRecord hr;
@@ -31,7 +35,6 @@ glm::vec3 traceRay(const core::Ray& ray,
         float32 closest = 1e30f;
 
         for (int32 i = 0; i < numObjects; ++i) {
-            core::HitRecord temp;
             if (core::hitObject(current, temp, 0.001f, closest, objects[i])) {
                 hitAny  = true;
                 closest = temp.t;
@@ -49,12 +52,21 @@ glm::vec3 traceRay(const core::Ray& ray,
             return throughput * emit * mat.data[3];
         }
 
-        core::ScatterResult sr = core::scatter(current, hr, mat, rng);
+        core::ScatterResult sr = core::scatter(current, hr, mat, rng, textures);
         if (!sr.scattered)
             return glm::vec3(0.0f);
 
         throughput *= sr.attenuation;
         current     = sr.ray;
+
+        // Russian roulette — stochastically terminate low-energy rays
+        if (depth >= 3) {
+            float32 pSurvive = glm::max(throughput.r, glm::max(throughput.g, throughput.b));
+            pSurvive = glm::clamp(pSurvive, 0.0f, 0.95f);
+            if (rng.nextFloat() >= pSurvive)
+                return glm::vec3(0.0f);
+            throughput /= pSurvive;
+        }
     }
 
     return glm::vec3(0.0f);
@@ -74,20 +86,22 @@ void CPUPathTracer::renderTile(const core::Scene& scene, const core::Camera& cam
     float32 invW = 1.0f / (float32)(cfg.width  - 1);
     float32 invH = 1.0f / (float32)(cfg.height - 1);
 
+    const core::Object*   objects   = scene.objects.data();
+    const int32           numObjs   = (int32)scene.objects.size();
+    const core::Material* materials = scene.materials.data();
+    const core::Texture*  textures  = scene.textures.empty() ? nullptr : scene.textures.data();
+
     for (int32 y = y0; y < y1; ++y) {
         for (int32 x = x0; x < x1; ++x) {
-            // Seed from pixel coordinates for reproducibility
             uint64 seed = (uint64)y * (uint64)cfg.width + (uint64)x;
             PCG32  rng(seed, 0ULL);
 
             for (int32 s = 0; s < cfg.spp; ++s) {
-                float32    u   = (x + rng.nextFloat()) * invW;
-                float32    v   = (y + rng.nextFloat()) * invH;
-                core::Ray  r   = core::generateRay(cam, u, v, rng);
-                glm::vec3  col = traceRay(r,
-                    scene.objects.data(),   (int32)scene.objects.size(),
-                    scene.materials.data(),
-                    rng, cfg.maxDepth);
+                float32   u   = (x + rng.nextFloat()) * invW;
+                float32   v   = (y + rng.nextFloat()) * invH;
+                core::Ray r   = core::generateRay(cam, u, v, rng);
+                glm::vec3 col = traceRay(r, objects, numObjs, materials, textures,
+                                         rng, cfg.maxDepth);
                 out.accumulate(x, y, col);
             }
         }
@@ -98,13 +112,17 @@ void CPUPathTracer::render(const core::Scene& scene, const core::Camera& cam,
                            const RenderConfig& cfg, Image& out) {
     int32 tilesX = (cfg.width  + cfg.tileSize - 1) / cfg.tileSize;
     int32 tilesY = (cfg.height + cfg.tileSize - 1) / cfg.tileSize;
+    int32 totalTiles = tilesX * tilesY;
 
     std::queue<std::pair<int32, int32>> queue;
     for (int32 ty = 0; ty < tilesY; ++ty)
         for (int32 tx = 0; tx < tilesX; ++tx)
             queue.push({ tx, ty });
 
-    std::mutex mx;
+    std::mutex            queueMx;
+    std::atomic<int32>    done{0};
+    int32 reportEvery = std::max(1, totalTiles / 20);
+
     int32 numThreads = cfg.numThreads > 0
         ? cfg.numThreads
         : (int32)std::thread::hardware_concurrency();
@@ -113,12 +131,16 @@ void CPUPathTracer::render(const core::Scene& scene, const core::Camera& cam,
         while (true) {
             std::pair<int32, int32> tile;
             {
-                std::lock_guard<std::mutex> lock(mx);
+                std::lock_guard<std::mutex> lock(queueMx);
                 if (queue.empty()) return;
                 tile = queue.front();
                 queue.pop();
             }
             renderTile(scene, cam, cfg, out, tile.first, tile.second);
+
+            int32 n = ++done;
+            if (n % reportEvery == 0 || n == totalTiles)
+                std::cout << "\r  " << n << "/" << totalTiles << " tiles" << std::flush;
         }
     };
 
@@ -128,4 +150,6 @@ void CPUPathTracer::render(const core::Scene& scene, const core::Camera& cam,
         threads.emplace_back(worker);
     for (auto& t : threads)
         t.join();
+
+    std::cout << "\n";
 }
