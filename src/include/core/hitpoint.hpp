@@ -1,20 +1,21 @@
 #ifndef CORE_HITPOINT_HPP
 #define CORE_HITPOINT_HPP
 
-// Lib includes
 #include <glm/glm.hpp>
-
-// Local includes
 #include <util/types.h>
+#include <core/ray.hpp>
 
 namespace core {
 
-struct Hitpoint {
-    float32 t;
+struct HitRecord {
+    float32   t;
     glm::vec3 p, n;
-    bool exit;
-    void setNormal(const glm::vec3& rayDir, const glm::vec3& normal);
+    glm::vec2 uv;
+    int32     materialIndex;
+    bool      frontFace;
 };
+
+void setFaceNormal(HitRecord& hr, const Ray& r, const glm::vec3& outwardN);
 
 } // namespace core
 

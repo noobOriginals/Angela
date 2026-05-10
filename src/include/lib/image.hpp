@@ -1,47 +1,24 @@
-#ifndef IMAGE_HPP
-#define IMAGE_HPP
+#ifndef LIB_IMAGE_HPP
+#define LIB_IMAGE_HPP
 
-// Std includes
 #include <string>
-
-// Lib includes
+#include <vector>
 #include <glm/glm.hpp>
-
-// Local includes
 #include <util/types.h>
-
-struct Pixel {
-    uint8 r, g, b;
-    Pixel();
-    Pixel(uint8 r, uint8 g, uint8 b);
-    Pixel(glm::vec3 v);
-};
 
 class Image {
 public:
-    Image() = default;
-    Image(const Image& other);
-    Image(int32 width, int32 height);
-    ~Image();
+    Image(int32 w, int32 h);
 
-    Pixel get(int32 x, int32 y) const;
+    void  accumulate(int32 x, int32 y, const glm::vec3& sample);
+    void  savePNG(const std::string& path, int32 samplesPerPixel) const;
 
-    void set(int32 x, int32 y, Pixel p);
-    void set(int32 i, Pixel p);
-    void setPixels(int32 size, int32 offset, Pixel* pixels);
-
-    void save(std::string filename) const;
-
-    const int32& getWidth() const;
-    const int32& getHeight() const;
-    const int32& getSize() const;
-    Pixel* getPixels(int32* size) const;
-
-    void operator=(const Image& other);
+    int32 getWidth()  const;
+    int32 getHeight() const;
 
 private:
-    Pixel* pixels;
-    int32 width, height, size;
+    std::vector<glm::vec3> buffer;
+    int32 width, height;
 };
 
-#endif // IMAGE_HPP
+#endif // LIB_IMAGE_HPP

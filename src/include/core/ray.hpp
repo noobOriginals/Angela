@@ -1,20 +1,21 @@
 #ifndef CORE_RAY_HPP
 #define CORE_RAY_HPP
 
-// Lib includes
 #include <glm/glm.hpp>
-
-// Local includes
 #include <util/types.h>
 
 namespace core {
 
 struct Ray {
     glm::vec3 org, dir;
+
     Ray() = default;
-    Ray(const glm::vec3& org, const glm::vec3& dir);
-    glm::vec3 at(float32 t) const;
+    Ray(const glm::vec3& org, const glm::vec3& dir) : org(org), dir(dir) {}
 };
+
+inline glm::vec3 rayAt(const Ray& r, float32 t) {
+    return r.org + r.dir * t;
+}
 
 } // namespace core
 

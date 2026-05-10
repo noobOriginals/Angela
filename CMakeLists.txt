@@ -12,6 +12,10 @@ file(GLOB_RECURSE Sources CONFIGURE_DEPENDS "${SrcPath}/*.cpp" "${SrcPath}/*.c")
 
 include_directories(${HeaderPath} $ENV{OPENGL_PATH})
 
+find_package(Threads REQUIRED)
+
 add_executable(${PROJECT_NAME} ${Sources})
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:-O3>)
+target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
 

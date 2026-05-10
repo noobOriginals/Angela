@@ -1,19 +1,10 @@
 #include <core/hitpoint.hpp>
 
-using namespace glm;
-
 namespace core {
 
-// Hitpoint
-
-void Hitpoint::setNormal(const vec3& dir, const vec3& normal) {
-    if (dot(dir, normal) > 0) {
-        exit = true;
-        n = -normal;
-    } else {
-        exit = false;
-        n = normal;
-    }
+void setFaceNormal(HitRecord& hr, const Ray& r, const glm::vec3& outwardN) {
+    hr.frontFace = glm::dot(r.dir, outwardN) < 0.0f;
+    hr.n = hr.frontFace ? outwardN : -outwardN;
 }
 
 } // namespace core
